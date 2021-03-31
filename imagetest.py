@@ -1,85 +1,92 @@
 import numpy
-from scipy import misc
-from scipy import ndimage
 import math
 import matplotlib.pyplot as plt
+import imageio
 
 
 def ifftExample():
-   shift = 4
-   spectrum = numpy.zeros((513,513))
-   spectrum[256,256] = 1
-   spectrum[256,256 + shift] = 1
-   spectrum[256,256 - shift] = 1
+    shift = 4
+    spectrum = numpy.zeros((513, 513))
+    spectrum[256, 256] = 1
+    spectrum[256, 256 + shift] = 1
+    spectrum[256, 256 - shift] = 1
 
-   plt.clf()
-   plt.imshow(spectrum, cmap=plt.cm.gray)
-   plt.show()
+    plt.clf()
+    plt.imshow(spectrum, cmap=plt.cm.gray)
+    plt.show()
 
+    A = numpy.fft.ifft2(spectrum)
+    img = numpy.array([[numpy.absolute(x) for x in row] for row in A])
 
-   A = numpy.fft.ifft2(spectrum)
-   img = numpy.array([[numpy.absolute(x) for x in row] for row in A])
-
-   plt.clf()
-   plt.imshow(img, cmap=plt.cm.gray)
-   plt.show()
+    plt.clf()
+    plt.imshow(img, cmap=plt.cm.gray)
+    plt.show()
 
 
 def fourierSpectrumExample(filename):
-   A = ndimage.imread(filename, flatten=True)
+    A = imageio.imread("images/" + filename, as_gray=True)
 
-   unshiftedfft = numpy.fft.fft2(A)
-   spectrum = numpy.log10(numpy.absolute(unshiftedfft) + numpy.ones(A.shape))
-   misc.imsave("images/%s-spectrum-unshifted.png" % (filename.split('.')[0]), spectrum)
+    unshiftedfft = numpy.fft.fft2(A)
+    spectrum = numpy.log10(numpy.absolute(unshiftedfft) + numpy.ones(A.shape))
+    spectrum = convertToByteImage(spectrum)
+    imageio.imsave("images/%s-spectrum-unshifted.png" %
+                   (filename.split('.')[0]), spectrum.astype(numpy.uint8))
 
-   shiftedFFT = numpy.fft.fftshift(numpy.fft.fft2(A))
-   spectrum = numpy.log10(numpy.absolute(shiftedFFT) + numpy.ones(A.shape))
-   misc.imsave("images/%s-spectrum.png" % (filename.split('.')[0]), spectrum)
+    shiftedFFT = numpy.fft.fftshift(numpy.fft.fft2(A))
+    spectrum = numpy.log10(numpy.absolute(shiftedFFT) + numpy.ones(A.shape))
+    spectrum = convertToByteImage(spectrum)
+    imageio.imsave("images/%s-spectrum.png" %
+                   (filename.split('.')[0]), spectrum.astype(numpy.uint8))
 
 
 # create a list of 2d indices of A in decreasing order by the size of the
 # (real) entry of A that they index to
 def sortedIndices(A):
-   indexList = [(i,j) for i in range(A.shape[0]) for j in range(A.shape[1])]
-   indexList.sort(key=lambda x: -A[x])
-   return numpy.array(indexList)
+    indexList = [(i, j) for i in range(A.shape[0]) for j in range(A.shape[1])]
+    indexList.sort(key=lambda x: -A[x])
+    return numpy.array(indexList)
 
 
 def animation(filename):
-   A = ndimage.imread(filename, flatten=True)
+    A = imageio.imread(filename, as_gray=True)
 
-   # subtract the mean so that the DC component is zero
-   A = A - numpy.mean(A)
-   ffted = numpy.fft.fft2(A)
+    # subtract the mean so that the DC component is zero
+    A = A - numpy.mean(A)
+    ffted = numpy.fft.fft2(A)
 
-   magnitudes = numpy.absolute(ffted)
-   frame = numpy.zeros(ffted.shape, dtype=numpy.complex)
+    magnitudes = numpy.absolute(ffted)
+    frame = numpy.zeros(ffted.shape, dtype=numpy.complex)
 
-   t = 0
-   decreasingIndices = sortedIndices(magnitudes)
+    t = 0
+    decreasingIndices = sortedIndices(magnitudes)
 
-   # only process every other index because every frequency has the
-   # same magnitude as its symmetric opposite about the origin.
-   for i,j in decreasingIndices[::2]:
-      wave = numpy.zeros(A.shape)
+    # only process every other index because every frequency has the
+    # same magnitude as its symmetric opposite about the origin.
+    for i, j in decreasingIndices[::2]:
+        wave = numpy.zeros(A.shape)
 
-      entry = ffted[i,j]
-      frame[i, j] = wave[i, j] = entry
-      frame[-i, -j] = wave[-i, -j] = entry.conjugate()
+        entry = ffted[i, j]
+        frame[i, j] = wave[i, j] = entry
+        frame[-i, -j] = wave[-i, -j] = entry.conjugate()
 
-      ifftFrame = numpy.fft.ifft2(numpy.copy(frame))
-      ifftFrame = [[x.real for x in row] for row in ifftFrame]
-      misc.imsave('frames/%06d.png' % t, ifftFrame)
+        ifftFrame = numpy.fft.ifft2(numpy.copy(frame))
+        ifftFrame = [[x.real for x in row] for row in ifftFrame]
+        ifftFrame = convertToByteImage(ifftFrame)
+        imageio.imsave('frames/%06d.png' % t, ifftFrame.astype(numpy.uint8))
 
-      ifftWave = numpy.fft.ifft2(numpy.copy(wave))
-      ifftWave = [[x.real for x in row] for row in ifftWave]
-      misc.imsave('waves/%06d.png' % t, ifftWave)
+        ifftWave = numpy.fft.ifft2(numpy.copy(wave))
+        ifftWave = [[x.real for x in row] for row in ifftWave]
+        ifftWave = convertToByteImage(ifftWave)
+        imageio.imsave('waves/%06d.png' % t, ifftWave.astype(numpy.uint8))
 
-      t += 1
+        t += 1
 
 
-#ifftExample()
+# Map pixel values to 0-255
+def convertToByteImage(image):
+    return ((image - numpy.min(image)) /
+            (numpy.max(image) - numpy.min(image))) * 255
+
+
 fourierSpectrumExample('sherlock.jpg')
-#animation('images/hance-up-sw.png')
-
-
+animation('images/hance-up-sw.png')
