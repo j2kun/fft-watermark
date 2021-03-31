@@ -1,7 +1,5 @@
 import numpy
 from numpy.fft import fft2, ifft2, fftshift, ifftshift
-from scipy import misc
-from scipy import ndimage
 import math
 import random
 import imageio

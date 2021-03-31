@@ -1,6 +1,4 @@
 import numpy
-from scipy import misc
-from scipy import ndimage
 import math
 import matplotlib.pyplot as plt
 import imageio
