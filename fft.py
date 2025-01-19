@@ -1,7 +1,5 @@
 import cmath
 import numpy
-import matplotlib.pyplot as plt
-import random
 
 def memoize(f):
    cache = {}
@@ -32,11 +30,11 @@ def fft(signal):
    if n == 1:
       return signal
    else:
-      Feven = fft([signal[i] for i in xrange(0, n, 2)])
-      Fodd = fft([signal[i] for i in xrange(1, n, 2)])
+      Feven = fft([signal[i] for i in range(0, n, 2)])
+      Fodd = fft([signal[i] for i in range(1, n, 2)])
 
       combined = [0] * n
-      for m in xrange(n/2):
+      for m in range(n/2):
          combined[m] = Feven[m] + omega(n, -m) * Fodd[m]
          combined[m + n/2] = Feven[m] - omega(n, -m) * Fodd[m]
 
