@@ -1,5 +1,8 @@
 import numpy
 import matplotlib.pyplot as plt
+from PIL import Image
+
+np = numpy
 
 
 def normalize(A):
@@ -11,8 +14,8 @@ def ifftExample():
     n = 1024
     spectrum = numpy.zeros((n + 1, n + 1))
     spectrum[n // 2, n // 2] = 1
-    spectrum[n//2, n//2 + shift] = 1
-    spectrum[n//2 , n//2 - shift] = 1
+    spectrum[n // 2, n // 2 + shift] = 1
+    spectrum[n // 2, n // 2 - shift] = 1
 
     plt.imsave("images/example_spectrum.png", spectrum, cmap=plt.cm.gray)
     A = numpy.fft.ifft2(spectrum)
@@ -26,19 +29,24 @@ def fourierSpectrumExample(filename):
     unshiftedfft = numpy.fft.fft2(A)
     spectrum = numpy.log10(numpy.absolute(unshiftedfft) + numpy.ones(A.shape))
     spectrum = normalize(spectrum)
-    plt.imsave(
-        "images/%s-spectrum-unshifted.png" % (filename.split("/")[-1].split(".")[0]),
-        spectrum,
-    )
+    plt.imsave("spectrum-unshifted.png", spectrum)
 
-    shiftedFFT = numpy.fft.fftshift(numpy.fft.fft2(A))
-    spectrum = numpy.log10(numpy.absolute(shiftedFFT) + numpy.ones(A.shape))
-    spectrum = normalize(spectrum)
-    plt.imsave(
-        "images/%s-spectrum.png" % (filename.split("/")[-1].split(".")[0]),
-        spectrum,
-    )
+    shiftedFFT = numpy.fft.fftshift(unshiftedfft)
+    spectrum = numpy.log(numpy.abs(shiftedFFT) + 1)
+    plt.imsave("spectrum.png", spectrum)
 
+
+def display_image_fft(image_path):
+    img = Image.open(image_path).convert('L')
+    img_array = np.array(img)
+
+    fft = np.fft.fft2(img_array)
+    fft_shifted = np.fft.fftshift(fft)
+
+    magnitude_spectrum = np.log(np.abs(fft_shifted) + 1)
+
+    plt.imsave('original_image.pdf', img_array, cmap='gray')
+    plt.imsave('fft_spectrum.pdf', magnitude_spectrum, cmap='gray')
 
 # create a list of 2d indices of A in decreasing order by the size of the
 # (real) entry of A that they index to
@@ -83,6 +91,6 @@ def animation(filename):
         t += 1
 
 
-ifftExample()
-# fourierSpectrumExample("images/sherlock.jpg")
+# ifftExample()
+display_image_fft("leaving-opera-2000.jpg")
 # animation('images/hance-up-sw.png')
